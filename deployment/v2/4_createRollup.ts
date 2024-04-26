@@ -259,7 +259,7 @@ async function main() {
 
     if (consensusContract.includes("PolygonValidium") && dataAvailabilityProtocol === "Avail") {
         // deploy data commitee
-        const PolygonDataCommitteeContract = (await ethers.getContractFactory("PolygonDataCommittee", deployer)) as any;
+        const PolygonDataCommitteeContract = (await ethers.getContractFactory("Avail", deployer)) as any;
         let polygonDataCommittee;
 
         for (let i = 0; i < attemptsDeployProxy; i++) {
