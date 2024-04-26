@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  * Contract responsible managing the data committee that will verify that the data sent for a validium is singed by a committee
  * It is advised to give the owner of the contract to a timelock contract once the data committee is set
  */
-contract PolygonDataCommittee is
+contract Avail is
     IDataAvailabilityProtocol,
     IPolygonDataCommitteeErrors,
     OwnableUpgradeable
@@ -126,59 +126,7 @@ contract PolygonDataCommittee is
         bytes32 signedHash,
         bytes calldata signaturesAndAddrs
     ) external view {
-        // Save storage variable on cache since will be used multiple times
-        uint256 cacheRequiredAmountOfSignatures = requiredAmountOfSignatures;
 
-        // pre-check: byte array size
-        uint256 splitByte = _SIGNATURE_SIZE * cacheRequiredAmountOfSignatures;
-        if (
-            signaturesAndAddrs.length < splitByte ||
-            (signaturesAndAddrs.length - splitByte) % _ADDR_SIZE != 0
-        ) {
-            revert UnexpectedAddrsAndSignaturesSize();
-        }
-
-        // hash the addresses part of the byte array and check that it's equal to committe hash
-        if (keccak256(signaturesAndAddrs[splitByte:]) != committeeHash) {
-            revert UnexpectedCommitteeHash();
-        }
-
-        // recover addresses from signatures and check that are part of the committee
-        uint256 lastAddrIndexUsed;
-        uint256 addrsLen = (signaturesAndAddrs.length - splitByte) / _ADDR_SIZE;
-        for (uint256 i = 0; i < cacheRequiredAmountOfSignatures; i++) {
-            uint256 currentSignatureStartingByte = i * _SIGNATURE_SIZE;
-
-            // Recover currnet signer from the signature
-            address currentSigner = ECDSA.recover(
-                signedHash,
-                signaturesAndAddrs[currentSignatureStartingByte:currentSignatureStartingByte +
-                    _SIGNATURE_SIZE]
-            );
-
-            // Search the recovered signer inside the address array
-            bool currentSignerIsPartOfCommittee = false;
-            for (uint256 j = lastAddrIndexUsed; j < addrsLen; j++) {
-                uint256 currentAddresStartingByte = splitByte + j * _ADDR_SIZE;
-                address committeeAddr = address(
-                    bytes20(
-                        signaturesAndAddrs[currentAddresStartingByte:currentAddresStartingByte +
-                            _ADDR_SIZE]
-                    )
-                );
-                if (committeeAddr == currentSigner) {
-                    lastAddrIndexUsed = j + 1;
-                    currentSignerIsPartOfCommittee = true;
-                    break;
-                }
-            }
-
-            // If an address is not on the comittee, or not enough required signatures are provided
-            // This verification reverts
-            if (!currentSignerIsPartOfCommittee) {
-                revert CommitteeAddressDoesNotExist();
-            }
-        }
     }
 
     /**

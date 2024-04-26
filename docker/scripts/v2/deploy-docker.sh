@@ -14,3 +14,5 @@ DEV_PERIOD=1 docker-compose -f docker/docker-compose.yml down
 docker build -t hermeznetwork/geth-zkevm-contracts -f docker/Dockerfile .
 # Let it readable for the multiplatform build coming later!
 sudo chmod -R go+rxw docker/gethData
+sudo chmod -R go+rxw docker/gethData before docker build -t hermeznetwork/geth-zkevm-contracts -f docker/Dockerfile .
+

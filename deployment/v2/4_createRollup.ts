@@ -66,15 +66,15 @@ async function main() {
         consensusContract,
     } = createRollupParameters;
 
-    const supportedConensus = ["PolygonZkEVMEtrog", "PolygonValidiumEtrog"];
+    const supportedConensus = ["PolygonZkEVMEtrog", "PolygonValidiumEtrog","Avail"];
 
     if (!supportedConensus.includes(consensusContract)) {
         throw new Error(`Consensus contract not supported, supported contracts are: ${supportedConensus}`);
     }
 
-    const dataAvailabilityProtocol = createRollupParameters.dataAvailabilityProtocol || "PolygonDataCommittee";
-
-    const supporteDataAvailabilityProtocols = ["PolygonDataCommittee"];
+    // const dataAvailabilityProtocol = createRollupParameters.dataAvailabilityProtocol || "PolygonDataCommittee";
+    const dataAvailabilityProtocol="Avail";
+    const supporteDataAvailabilityProtocols = ["PolygonDataCommittee","PolygonValidiumEtrog","Avail"];
 
     if (
         consensusContract.includes("PolygonValidium") &&
@@ -257,7 +257,7 @@ async function main() {
     console.log("#######################\n");
     console.log("Created new Rollup:", newZKEVMAddress);
 
-    if (consensusContract.includes("PolygonValidium") && dataAvailabilityProtocol === "PolygonDataCommittee") {
+    if (consensusContract.includes("PolygonValidium") && dataAvailabilityProtocol === "Avail") {
         // deploy data commitee
         const PolygonDataCommitteeContract = (await ethers.getContractFactory("PolygonDataCommittee", deployer)) as any;
         let polygonDataCommittee;
@@ -287,8 +287,9 @@ async function main() {
                 await PolygonValidiumContract.setDataAvailabilityProtocol(polygonDataCommittee?.target as any)
             ).wait();
 
-            // // Setup data commitee to 0
-            // await (await polygonDataCommittee?.setupCommittee(0, [], "0x")).wait();
+            // Setup data commitee to 0
+            await (await polygonDataCommittee?.setupCommittee(0, [], "0x")).wait();
+            console.log(dataAvailabilityProtocol, "deployed to:", polygonDataCommittee.target);
         } else {
             await (await polygonDataCommittee?.transferOwnership(adminZkEVM)).wait();
         }
