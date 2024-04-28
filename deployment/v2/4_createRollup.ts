@@ -111,7 +111,7 @@ async function main() {
                         null,
                         ((feedata.maxFeePerGas as bigint) * BigInt(createRollupParameters.multiplierGas)) / 1000n,
                         ((feedata.maxPriorityFeePerGas as bigint) * BigInt(createRollupParameters.multiplierGas)) /
-                            1000n
+                        1000n
                     );
                 }
                 currentProvider.getFeeData = overrideFeeData;
