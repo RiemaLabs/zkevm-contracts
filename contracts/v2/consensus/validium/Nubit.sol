@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  * Contract responsible managing the data committee that will verify that the data sent for a validium is singed by a committee
  * It is advised to give the owner of the contract to a timelock contract once the data committee is set
  */
-contract Avail is
+contract Nubit is
     IDataAvailabilityProtocol,
     IPolygonDataCommitteeErrors,
     OwnableUpgradeable
@@ -26,7 +26,7 @@ contract Avail is
     }
 
     // Name of the data availability protocol
-    string internal constant _PROTOCOL_NAME = "Avail";
+    string internal constant _PROTOCOL_NAME = "Nubit";
 
     // Size of a signature in bytes
     uint256 internal constant _SIGNATURE_SIZE = 65;

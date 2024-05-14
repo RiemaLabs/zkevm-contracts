@@ -66,15 +66,15 @@ async function main() {
         consensusContract,
     } = createRollupParameters;
 
-    const supportedConensus = ["PolygonZkEVMEtrog", "PolygonValidiumEtrog","Avail"];
+    const supportedConensus = ["PolygonZkEVMEtrog", "PolygonValidiumEtrog","Nubit"];
 
     if (!supportedConensus.includes(consensusContract)) {
         throw new Error(`Consensus contract not supported, supported contracts are: ${supportedConensus}`);
     }
 
     // const dataAvailabilityProtocol = createRollupParameters.dataAvailabilityProtocol || "PolygonDataCommittee";
-    const dataAvailabilityProtocol="Avail";
-    const supporteDataAvailabilityProtocols = ["PolygonDataCommittee","PolygonValidiumEtrog","Avail"];
+    const dataAvailabilityProtocol="Nubit";
+    const supporteDataAvailabilityProtocols = ["PolygonDataCommittee","PolygonValidiumEtrog","Nubit"];
 
     if (
         consensusContract.includes("PolygonValidium") &&
@@ -257,9 +257,9 @@ async function main() {
     console.log("#######################\n");
     console.log("Created new Rollup:", newZKEVMAddress);
 
-    if (consensusContract.includes("PolygonValidium") && dataAvailabilityProtocol === "Avail") {
+    if (consensusContract.includes("PolygonValidium") && dataAvailabilityProtocol === "Nubit") {
         // deploy data commitee
-        const PolygonDataCommitteeContract = (await ethers.getContractFactory("Avail", deployer)) as any;
+        const PolygonDataCommitteeContract = (await ethers.getContractFactory("Nubit", deployer)) as any;
         let polygonDataCommittee;
 
         for (let i = 0; i < attemptsDeployProxy; i++) {
