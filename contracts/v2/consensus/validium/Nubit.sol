@@ -123,10 +123,16 @@ contract Nubit is
      * note that each ECDSA signatures are used, therefore each one must be 65 bytes
      */
     function verifyMessage(
-        bytes32 signedHash,
-        bytes calldata signaturesAndAddrs
-    ) external view {
-
+        bytes[] memory _signature,
+        bytes32 calldata msg_hash
+    ) external view returns (bool) {
+        uint256 membersLength = members.length;
+        address _signer = ECDSA.recover(msg_hash, _signature);
+        for (uint256 i = 0; i < membersLength; i++) {
+            if (members[i].addr == _signer)
+                return true;
+        }
+        return false;
     }
 
     /**
