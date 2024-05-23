@@ -20,6 +20,7 @@ contract Nubit is
      * @param url string that represents the URL of the member to be used to access the data
      * @param addr address of the member that will be used to sign
      */
+    error InvalidSig();
     struct Member {
         string url;
         address addr;
@@ -58,7 +59,7 @@ contract Nubit is
 
     function initialize() external initializer {
         // Initialize OZ contracts
-        __Ownable_init_unchained();
+        __Ownable_init_unchained(msg.sender);
     }
 
     /**
@@ -123,16 +124,18 @@ contract Nubit is
      * note that each ECDSA signatures are used, therefore each one must be 65 bytes
      */
     function verifyMessage(
-        bytes[] memory _signature,
-        bytes32 calldata msg_hash
-    ) external view returns (bool) {
+        bytes memory _signature,
+        bytes32 msg_hash
+    ) external view {
         uint256 membersLength = members.length;
         address _signer = ECDSA.recover(msg_hash, _signature);
+        bool rev=true;
         for (uint256 i = 0; i < membersLength; i++) {
             if (members[i].addr == _signer)
-                return true;
+                rev=false;
         }
-        return false;
+        if (rev)
+            revert InvalidSig();
     }
 
     /**
