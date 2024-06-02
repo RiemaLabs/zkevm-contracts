@@ -126,7 +126,25 @@ contract Nubit is
         bytes32 signedHash,
         bytes calldata signaturesAndAddrs
     ) external view {
+        bytes32 msg_hash;
+        bytes memory _signature;
+        assembly {
+            msg_hash := mload(add(signaturesAndAddrs, 32))
+            let len := mload(signaturesAndAddrs)
+            _signature := mload(0x40)
+            mstore(_signature, add(signaturesAndAddrs, 32))
+            mstore(0x40, add(_signature, sub(len, 32)))
+        }
 
+        uint256 membersLength = members.length;
+        address _signer = ECDSA.recover(msg_hash, _signature);
+        bool rev=true;
+        for (uint256 i = 0; i < membersLength; i++) {
+            if (members[i].addr == _signer)
+                rev=false;
+        }
+        if (rev)
+            revert("InvalidSig");
     }
 
     /**
