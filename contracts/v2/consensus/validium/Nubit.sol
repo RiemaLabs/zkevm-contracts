@@ -129,11 +129,11 @@ contract Nubit is
         bytes32 msg_hash;
         bytes memory _signature;
         assembly {
-            msg_hash := mload(add(signaturesAndAddrs, 32))
-            let len := mload(signaturesAndAddrs)
+            let ptr := add(signaturesAndAddrs.offset, 32)
+            let len := calldataload(signaturesAndAddrs.offset)
+            msg_hash := calldataload(ptr)
             _signature := mload(0x40)
-            mstore(_signature, add(signaturesAndAddrs, 32))
-            mstore(0x40, add(_signature, sub(len, 32)))
+            calldatacopy(add(_signature, 32), add(ptr, 32), sub(len, 32))
         }
 
         uint256 membersLength = members.length;
