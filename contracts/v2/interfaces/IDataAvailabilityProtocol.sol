@@ -6,7 +6,7 @@ interface IDataAvailabilityProtocol {
     function getProcotolName() external view returns (string memory);
 
     function verifyMessage(
-        bytes memory _signature,
-        bytes32 msg_hash
+        bytes32 hash,
+        bytes calldata dataAvailabilityMessage
     ) external view;
 }

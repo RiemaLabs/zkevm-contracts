@@ -89,9 +89,7 @@ contract PolygonValidiumEtrogPrevious is
     function sequenceBatchesValidium(
         ValidiumBatchData[] calldata batches,
         address l2Coinbase,
-        bytes calldata dataAvailabilityMessage,
-        bytes memory _signature,
-        bytes32 msg_hash
+        bytes calldata dataAvailabilityMessage
     ) external onlyTrustedSequencer {
         uint256 batchesNum = batches.length;
         if (batchesNum == 0) {
@@ -114,6 +112,9 @@ contract PolygonValidiumEtrogPrevious is
 
         // Store in a temporal variable, for avoid access again the storage slot
         uint64 initLastForceBatchSequenced = currentLastForceBatchSequenced;
+
+        // Accumulated sequenced transaction hash to verify them afterward against the dataAvailabilityProtocol
+        bytes32 accumulatedNonForcedTransactionsHash = bytes32(0);
 
         for (uint256 i = 0; i < batchesNum; i++) {
             // Load current sequence
@@ -155,6 +156,14 @@ contract PolygonValidiumEtrogPrevious is
                 // Delete forceBatch data since won't be used anymore
                 delete forcedBatches[currentLastForceBatchSequenced];
             } else {
+                // Accumulate non forced transactions hash
+                accumulatedNonForcedTransactionsHash = keccak256(
+                    abi.encodePacked(
+                        accumulatedNonForcedTransactionsHash,
+                        currentBatch.transactionsHash
+                    )
+                );
+
                 // Note that forcedGlobalExitRoot and forcedBlockHashL1 remain unused and unchecked in this path
                 // The synchronizer should be aware of that
 
@@ -210,8 +219,8 @@ contract PolygonValidiumEtrogPrevious is
             // Validate that the data availability protocol accepts the dataAvailabilityMessage
             // note This is a view function, so there's not much risk even if this contract was vulnerable to reentrant attacks
             dataAvailabilityProtocol.verifyMessage(
-                _signature,
-                msg_hash
+                accumulatedNonForcedTransactionsHash,
+                dataAvailabilityMessage
             );
         }
 
