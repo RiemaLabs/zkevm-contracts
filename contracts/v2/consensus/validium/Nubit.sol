@@ -11,9 +11,9 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  * It is advised to give the owner of the contract to a timelock contract once the data committee is set
  */
 contract Nubit is
-    IDataAvailabilityProtocol,
-    IPolygonDataCommitteeErrors,
-    OwnableUpgradeable
+IDataAvailabilityProtocol,
+IPolygonDataCommitteeErrors,
+OwnableUpgradeable
 {
     /**
      * @notice Struct which will store all the data of the committee members
@@ -92,7 +92,7 @@ contract Nubit is
             address currentMemberAddr = address(
                 bytes20(
                     addrsBytes[currentAddresStartingByte:currentAddresStartingByte +
-                        _ADDR_SIZE]
+                    _ADDR_SIZE]
                 )
             );
 
@@ -126,7 +126,25 @@ contract Nubit is
         bytes32 signedHash,
         bytes calldata signaturesAndAddrs
     ) external view {
+        bytes32 msg_hash;
+        bytes memory _signature;
+        assembly {
+            let ptr := add(signaturesAndAddrs.offset, 32)
+            let len := calldataload(signaturesAndAddrs.offset)
+            msg_hash := calldataload(ptr)
+            _signature := mload(0x40)
+            calldatacopy(add(_signature, 32), add(ptr, 32), sub(len, 32))
+        }
 
+        uint256 membersLength = members.length;
+        address _signer = ECDSA.recover(msg_hash, _signature);
+        bool rev=true;
+        for (uint256 i = 0; i < membersLength; i++) {
+            if (members[i].addr == _signer)
+                rev=false;
+        }
+        if (rev)
+            revert("InvalidSig");
     }
 
     /**
