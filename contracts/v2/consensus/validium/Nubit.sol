@@ -25,6 +25,8 @@ OwnableUpgradeable
         address addr;
     }
 
+    uint256 internal constant _KZGDATA_SIZE = 40;
+
     // Name of the data availability protocol
     string internal constant _PROTOCOL_NAME = "Nubit";
 
@@ -117,17 +119,18 @@ OwnableUpgradeable
 
     /**
      * @notice Verifies that the given signedHash has been signed by requiredAmountOfSignatures committee members
-     * @param signedHash Hash that must have been signed by requiredAmountOfSignatures of committee members
-     * @param signaturesAndAddrs Byte array containing the signatures and all the addresses of the committee in ascending order
+     * @param data Byte array containing height+kzg commitment (first 40 bytes), and the signatures and all the addresses of the committee in ascending order
      * [signature 0, ..., signature requiredAmountOfSignatures -1, address 0, ... address N]
      * note that each ECDSA signatures are used, therefore each one must be 65 bytes
      */
     function verifyMessage(
-        bytes32 signedHash,
-        bytes calldata signaturesAndAddrs
+        bytes32,
+        bytes calldata data
     ) external view {
         bytes32 msg_hash;
         bytes memory _signature;
+        require(data.length >= _KZGDATA_SIZE, "Invalid contract");
+        bytes calldata signaturesAndAddrs = data[_KZGDATA_SIZE:];
         assembly {
             let ptr := add(signaturesAndAddrs.offset, 32)
             let len := calldataload(signaturesAndAddrs.offset)
