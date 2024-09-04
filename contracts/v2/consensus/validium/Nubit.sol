@@ -124,11 +124,9 @@ OwnableUpgradeable
      * note that each ECDSA signatures are used, therefore each one must be 65 bytes
      */
     function verifyMessage(
-        bytes32,
+        bytes32 signedHash,
         bytes calldata data
     ) external view {
-        bytes32 msg_hash;
-        bytes memory _signature;
         require(data.length >= _KZGDATA_SIZE, "Invalid contract");
         bytes calldata signaturesAndAddrs = data[_KZGDATA_SIZE:];
         // Save storage variable on cache since will be used multiple times
