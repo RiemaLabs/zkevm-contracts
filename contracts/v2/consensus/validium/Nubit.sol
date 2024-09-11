@@ -25,6 +25,8 @@ contract Nubit is
         address addr;
     }
 
+    uint256 internal constant _KZGDATA_SIZE = 40;
+
     // Name of the data availability protocol
     string internal constant _PROTOCOL_NAME = "Nubit";
 
@@ -117,34 +119,69 @@ contract Nubit is
 
     /**
      * @notice Verifies that the given signedHash has been signed by requiredAmountOfSignatures committee members
-     * @param signedHash Hash that must have been signed by requiredAmountOfSignatures of committee members
-     * @param signaturesAndAddrs Byte array containing the signatures and all the addresses of the committee in ascending order
+     * @param data Byte array containing height+kzg commitment (first 40 bytes), and the signatures and all the addresses of the committee in ascending order
      * [signature 0, ..., signature requiredAmountOfSignatures -1, address 0, ... address N]
      * note that each ECDSA signatures are used, therefore each one must be 65 bytes
      */
     function verifyMessage(
         bytes32 signedHash,
-        bytes calldata signaturesAndAddrs
+        bytes calldata data
     ) external view {
-        bytes32 msg_hash;
-        bytes memory _signature;
-        assembly {
-            let ptr := add(signaturesAndAddrs.offset, 32)
-            let len := calldataload(signaturesAndAddrs.offset)
-            msg_hash := calldataload(ptr)
-            _signature := mload(0x40)
-            calldatacopy(add(_signature, 32), add(ptr, 32), sub(len, 32))
+        require(data.length >= _KZGDATA_SIZE, "Invalid contract");
+        bytes calldata signaturesAndAddrs = data[_KZGDATA_SIZE:];
+        // Save storage variable on cache since will be used multiple times
+        uint256 cacheRequiredAmountOfSignatures = requiredAmountOfSignatures;
+
+        // pre-check: byte array size
+        uint256 splitByte = _SIGNATURE_SIZE * cacheRequiredAmountOfSignatures;
+        if (
+            signaturesAndAddrs.length < splitByte ||
+            (signaturesAndAddrs.length - splitByte) % _ADDR_SIZE != 0
+        ) {
+            revert UnexpectedAddrsAndSignaturesSize();
         }
 
-        uint256 membersLength = members.length;
-        address _signer = ECDSA.recover(msg_hash, _signature);
-        bool rev=true;
-        for (uint256 i = 0; i < membersLength; i++) {
-            if (members[i].addr == _signer)
-                rev=false;
+        // hash the addresses part of the byte array and check that it's equal to committe hash
+        if (keccak256(signaturesAndAddrs[splitByte:]) != committeeHash) {
+            revert UnexpectedCommitteeHash();
         }
-        if (rev)
-            revert("InvalidSig");
+
+        // recover addresses from signatures and check that are part of the committee
+        uint256 lastAddrIndexUsed;
+        uint256 addrsLen = (signaturesAndAddrs.length - splitByte) / _ADDR_SIZE;
+        for (uint256 i = 0; i < cacheRequiredAmountOfSignatures; i++) {
+            uint256 currentSignatureStartingByte = i * _SIGNATURE_SIZE;
+
+            // Recover currnet signer from the signature
+            address currentSigner = ECDSA.recover(
+                signedHash,
+                signaturesAndAddrs[currentSignatureStartingByte:currentSignatureStartingByte +
+                    _SIGNATURE_SIZE]
+            );
+
+            // Search the recovered signer inside the address array
+            bool currentSignerIsPartOfCommittee = false;
+            for (uint256 j = lastAddrIndexUsed; j < addrsLen; j++) {
+                uint256 currentAddresStartingByte = splitByte + j * _ADDR_SIZE;
+                address committeeAddr = address(
+                    bytes20(
+                        signaturesAndAddrs[currentAddresStartingByte:currentAddresStartingByte +
+                            _ADDR_SIZE]
+                    )
+                );
+                if (committeeAddr == currentSigner) {
+                    lastAddrIndexUsed = j + 1;
+                    currentSignerIsPartOfCommittee = true;
+                    break;
+                }
+            }
+
+            // If an address is not on the comittee, or not enough required signatures are provided
+            // This verification reverts
+            if (!currentSignerIsPartOfCommittee) {
+                revert CommitteeAddressDoesNotExist();
+            }
+        }
     }
 
     /**
