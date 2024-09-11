@@ -10,7 +10,7 @@
     "editor.formatOnSave": true
   },
   "[solidity]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "JuanBlanco.solidity",
     "editor.formatOnSave": true
   },
 }

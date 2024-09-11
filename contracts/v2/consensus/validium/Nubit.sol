@@ -11,9 +11,9 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  * It is advised to give the owner of the contract to a timelock contract once the data committee is set
  */
 contract Nubit is
-IDataAvailabilityProtocol,
-IPolygonDataCommitteeErrors,
-OwnableUpgradeable
+    IDataAvailabilityProtocol,
+    IPolygonDataCommitteeErrors,
+    OwnableUpgradeable
 {
     /**
      * @notice Struct which will store all the data of the committee members
@@ -94,7 +94,7 @@ OwnableUpgradeable
             address currentMemberAddr = address(
                 bytes20(
                     addrsBytes[currentAddresStartingByte:currentAddresStartingByte +
-                    _ADDR_SIZE]
+                        _ADDR_SIZE]
                 )
             );
 
